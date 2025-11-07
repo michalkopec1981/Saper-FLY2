@@ -40,4 +40,4 @@ primary_region = 'fra'
 
 # Deploy configuration
 [deploy]
-  release_command = "python -c 'from app import db; db.create_all()'"
+  release_command = "python init_db.py"
