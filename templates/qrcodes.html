@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Kody QR - Saper{% endblock %}
+
+{% block styles %}
+<style>
+    /* Style ukrywają niepotrzebne elementy podczas drukowania */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .printable-area, .printable-area * {
+            visibility: visible;
+        }
+        .printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none;
+        }
+        .qr-card {
+            page-break-inside: avoid; /* Zapobiega łamaniu kart między stronami */
+        }
+    }
+    .qr-card {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+        page-break-inside: avoid;
+    }
+    .qr-image {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1>Kody QR do Wydruku (Event {{ event_id }})</h1>
+        <button class="btn btn-primary" onclick="window.print()">Drukuj Wszystkie</button>
+    </div>
+
+    <div class="row">
+        {% for qr in qrcodes %}
+        <div class="col-md-4 col-sm-6">
+            <div class="card qr-card printable-area">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ request.url_root }}player/{{ event_id }}/{{ qr.code_identifier }}" 
+                     alt="Kod QR dla {{ qr.code_identifier }}" 
+                     class="qr-image img-fluid">
+                <div class="card-body">
+                    <h5 class="card-title">{{ qr.code_identifier.replace('czerwony', 'Czerwony ').replace('bialy', 'Biały ') }}</h5>
+                    <p class="card-text text-muted">Event {{ event_id }}</p>
+                    <button class="btn btn-secondary btn-sm no-print" onclick="printSingle(this)">Drukuj ten kod</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning">
+                Brak kodów QR do wyświetlenia. Wygeneruj je w panelu hosta, aby je zobaczyć.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function printSingle(button) {
+    // Znajdź najbliższą kartę, którą chcemy wydrukować
+    const cardToPrint = button.closest('.printable-area');
+    // Zapamiętaj oryginalną zawartość strony
+    const originalContents = document.body.innerHTML;
+    // Podmień zawartość strony na samą kartę
+    document.body.innerHTML = cardToPrint.innerHTML;
+    // Wydrukuj
+    window.print();
+    // Przywróć oryginalną zawartość strony
+    document.body.innerHTML = originalContents;
+    // Odśwież stronę, aby przywrócić działanie wszystkich skryptów
+    location.reload(); 
+}
+</script>
+{% endblock %}
+
