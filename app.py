@@ -1876,6 +1876,69 @@ def check_vote(photo_id, player_id):
     vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
     return jsonify({'voted': vote is not None})
 
+@app.route('/api/player/upload_photo', methods=['POST'])
+def upload_photo():
+    """Upload funny photo - RÓŻOWY KOD QR"""
+    try:
+        if 'photo' not in request.files:
+            return jsonify({'error': 'Brak pliku zdjęcia'}), 400
+
+        file = request.files['photo']
+        player_id = request.form.get('player_id')
+
+        if not player_id:
+            return jsonify({'error': 'Brak ID gracza'}), 400
+
+        player = db.session.get(Player, int(player_id))
+        if not player:
+            return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+        # Generuj unikalną nazwę pliku
+        filename = secure_filename(f"funny_{player.event_id}_{player_id}_{datetime.utcnow().timestamp()}.jpg")
+        filepath = os.path.join(funny_folder, filename)
+
+        # Zapisz plik
+        file.save(filepath)
+
+        # Zapisz w bazie danych
+        photo = FunnyPhoto(
+            player_id=player_id,
+            player_name=player.name,
+            image_url=f"/static/uploads/funny/{filename}",
+            event_id=player.event_id,
+            votes=0
+        )
+        db.session.add(photo)
+
+        # Przyznaj 15 punktów
+        bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
+        points = 15 * bonus
+        player.score += points
+
+        db.session.commit()
+
+        # Emit updates
+        emit_leaderboard_update(f'event_{player.event_id}')
+        socketio.emit('photos_update', {
+            'photo_id': photo.id,
+            'player_name': photo.player_name,
+            'image_url': photo.image_url,
+            'votes': photo.votes
+        }, room=f'event_{player.event_id}')
+
+        return jsonify({
+            'success': True,
+            'message': f'Świetne zdjęcie! Zdobywasz {points} punktów!',
+            'score': player.score
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error uploading photo: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/player/minigame/complete', methods=['POST'])
 def complete_minigame():
     data = request.json
