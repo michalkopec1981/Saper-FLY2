@@ -112,3 +112,15 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Fly.io
+fly.toml.bak
+.fly/
+*.fly.dev
+
+# Local data
+/data/
+static/uploads/logos/*
+static/uploads/funny/*
+!static/uploads/logos/.gitkeep
+!static/uploads/funny/.gitkeep
