@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for saper-fly2-7f2tqg on 2025-11-07T12:31:22Z
+# fly.toml app configuration file generated for saper-fly2-7f2tqg on 2025-11-07T21:29:35Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'saper-fly2-7f2tqg'
-primary_region = 'fra'
+primary_region = 'ams'
 
 [build]
 
